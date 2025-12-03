@@ -157,6 +157,25 @@ main {
   pointer-events: none;
 }
 
+.figure__map {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity var(--transition);
+  pointer-events: none;
+}
+
+.figure__map.is-active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.figure__image--map {
+  background-image: none !important;
+  background-color: #03070b;
+  pointer-events: auto;
+}
+
 .figure__image::after {
   content: "";
   position: absolute;
@@ -165,6 +184,15 @@ main {
     180deg,
     rgba(5, 7, 11, 0.1),
     rgba(5, 7, 11, 0.8) 60%
+  );
+  pointer-events: none;
+}
+
+.figure__image--map::after {
+  background: linear-gradient(
+    180deg,
+    rgba(5, 7, 11, 0.25),
+    rgba(5, 7, 11, 0.85) 70%
   );
 }
 
@@ -224,8 +252,19 @@ main {
 }
 
 .step--map {
-  width: min(900px, 96vw);
-  gap: 1.25rem;
+  width: 100%;
+  padding: 45vh 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  pointer-events: none;
+  gap: 0;
+  margin: 0;
+  visibility: hidden;
+}
+
+body.map-active .scrolly__content {
+  pointer-events: none;
 }
 
 .step.is-active {
@@ -240,16 +279,6 @@ main {
 .step p {
   color: var(--text);
   margin-bottom: 0.5rem;
-}
-
-.map-shell {
-  width: 100%;
-  min-height: clamp(320px, 65vh, 720px);
-  border-radius: 1.25rem;
-  overflow: hidden;
-  background: radial-gradient(circle at top, #0d1c29, #05090f);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.45);
 }
 
 #map {
@@ -338,10 +367,6 @@ main {
 
   .step--map {
     width: 100%;
-  }
-
-  .map-shell {
-    min-height: 60vh;
   }
 
   .data-card {

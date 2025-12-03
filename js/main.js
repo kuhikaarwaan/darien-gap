@@ -1,7 +1,78 @@
 const figureImage = document.querySelector('.figure__image');
 const figureCaption = document.querySelector('.figure__caption');
+const figureMap = document.querySelector('.figure__map');
 const steps = document.querySelectorAll('.scrolly .step');
 const screenBlocks = document.querySelectorAll('.screen-block');
+
+let mapInstance = null;
+let mapLoaded = false;
+let pendingMapView = null;
+
+const toggleMapBackground = isActive => {
+  if (figureMap) {
+    figureMap.classList.toggle('is-active', isActive);
+  }
+  if (figureImage) {
+    figureImage.classList.toggle('figure__image--map', isActive);
+  }
+  document.body.classList.toggle('map-active', isActive);
+};
+
+const parseCenterAttr = attr => {
+  if (!attr) return null;
+  const [lng, lat] = attr.split(',').map(value => parseFloat(value.trim()));
+  if ([lng, lat].every(coord => Number.isFinite(coord))) {
+    return [lng, lat];
+  }
+  return null;
+};
+
+const buildCameraOptions = (view, instant = false) => {
+  const options = {};
+  if (view.center) options.center = view.center;
+  if (typeof view.zoom === 'number') options.zoom = view.zoom;
+  if (typeof view.bearing === 'number') options.bearing = view.bearing;
+  if (typeof view.pitch === 'number') options.pitch = view.pitch;
+  if (!instant) {
+    options.duration = view.duration ?? 1600;
+    options.essential = true;
+  }
+  return options;
+};
+
+const getMapViewFromStep = step => {
+  if (!step || !step.classList.contains('step--map')) {
+    return null;
+  }
+  const view = {};
+  const center = parseCenterAttr(step.getAttribute('data-map-center'));
+  const zoom = parseFloat(step.getAttribute('data-map-zoom'));
+  const bearing = parseFloat(step.getAttribute('data-map-bearing'));
+  const pitch = parseFloat(step.getAttribute('data-map-pitch'));
+
+  if (center) view.center = center;
+  if (Number.isFinite(zoom)) view.zoom = zoom;
+  if (Number.isFinite(bearing)) view.bearing = bearing;
+  if (Number.isFinite(pitch)) view.pitch = pitch;
+
+  return Object.keys(view).length ? view : null;
+};
+
+const flyToMapView = view => {
+  if (!view) return;
+  pendingMapView = view;
+  if (mapInstance && mapLoaded) {
+    mapInstance.flyTo(buildCameraOptions(view));
+    pendingMapView = null;
+  }
+};
+
+const applyPendingMapView = () => {
+  if (pendingMapView && mapInstance && mapLoaded) {
+    mapInstance.jumpTo(buildCameraOptions(pendingMapView, true));
+    pendingMapView = null;
+  }
+};
 
 const setActiveStep = targetStep => {
   steps.forEach(step => {
@@ -10,13 +81,26 @@ const setActiveStep = targetStep => {
 };
 
 const updateFigure = step => {
+  if (!step) return;
   const bg = step.getAttribute('data-bg');
   const caption = step.getAttribute('data-caption');
-  if (bg) {
-    figureImage.style.backgroundImage = `url(${bg})`;
+  const isMapStep = step.classList.contains('step--map');
+
+  if (isMapStep) {
+    toggleMapBackground(true);
+    if (figureImage) {
+      figureImage.style.backgroundImage = '';
+    }
+    flyToMapView(getMapViewFromStep(step));
+  } else {
+    toggleMapBackground(false);
+    if (bg && figureImage) {
+      figureImage.style.backgroundImage = `url(${bg})`;
+    }
   }
-  if (caption) {
-    figureCaption.textContent = caption;
+
+  if (figureCaption) {
+    figureCaption.textContent = caption || '';
   }
   setActiveStep(step);
 };
@@ -65,31 +149,31 @@ if (screenBlocks.length) {
 const mapContainer = document.getElementById("map");
 
 if (mapContainer && window.mapboxgl) {
-  // Set your Mapbox access token
   mapboxgl.accessToken = "pk.eyJ1Ijoia3VoaWthIiwiYSI6ImNtaGR2anRheDA3YTAycXBpZnNwZ2I1bTMifQ.zifNwpp3S5WlAUvhxJgyZw";
 
-  const map = new mapboxgl.Map({
+  mapInstance = new mapboxgl.Map({
     container: "map",
     style: "mapbox://styles/mapbox/streets-v12",
-    center: [-77.8, 8.0], // temporary center before fitBounds
+    center: [-77.8, 8.0],
     zoom: 6
   });
 
-  map.addControl(new mapboxgl.NavigationControl(), "top-right");
+  mapInstance.addControl(new mapboxgl.NavigationControl(), "top-right");
+  mapInstance.scrollZoom.disable();
 
-  map.on("load", () => {
-    // Load GeoJSON from external file
+  mapInstance.on("load", () => {
+    mapLoaded = true;
+    applyPendingMapView();
+
     fetch("data/geojson/darien-gap.geojson")
       .then(res => res.json())
       .then(geojson => {
-        // Add as a source
-        map.addSource("territory", {
+        mapInstance.addSource("territory", {
           type: "geojson",
           data: geojson
         });
 
-        // Fill layer
-        map.addLayer({
+        mapInstance.addLayer({
           id: "territory-fill",
           type: "fill",
           source: "territory",
@@ -99,8 +183,7 @@ if (mapContainer && window.mapboxgl) {
           }
         });
 
-        // Outline layer
-        map.addLayer({
+        mapInstance.addLayer({
           id: "territory-outline",
           type: "line",
           source: "territory",
@@ -110,7 +193,6 @@ if (mapContainer && window.mapboxgl) {
           }
         });
 
-        // Compute bounds and fit
         const bounds = new mapboxgl.LngLatBounds();
         const features = geojson.features || [];
 
@@ -128,7 +210,7 @@ if (mapContainer && window.mapboxgl) {
         });
 
         if (!bounds.isEmpty()) {
-          map.fitBounds(bounds, { padding: 40 });
+          mapInstance.fitBounds(bounds, { padding: 40 });
         }
       })
       .catch(err => {
@@ -136,20 +218,19 @@ if (mapContainer && window.mapboxgl) {
       });
   });
 
-  // Optional interactions
-  map.on("click", "territory-fill", (e) => {
+  mapInstance.on("click", "territory-fill", e => {
     new mapboxgl.Popup()
       .setLngLat(e.lngLat)
       .setHTML("<strong>Territory</strong>")
-      .addTo(map);
+      .addTo(mapInstance);
   });
 
-  map.on("mouseenter", "territory-fill", () => {
-    map.getCanvas().style.cursor = "pointer";
+  mapInstance.on("mouseenter", "territory-fill", () => {
+    mapInstance.getCanvas().style.cursor = "pointer";
   });
 
-  map.on("mouseleave", "territory-fill", () => {
-    map.getCanvas().style.cursor = "";
+  mapInstance.on("mouseleave", "territory-fill", () => {
+    mapInstance.getCanvas().style.cursor = "";
   });
 } else if (mapContainer) {
   mapContainer.textContent = "Map failed to load. Please retry once the page finishes loading.";

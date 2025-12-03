@@ -28,7 +28,14 @@
   <body>
     <main>
       <div class="scrolly__figure" aria-live="polite">
-        <div class="figure__image" aria-hidden="true"></div>
+        <div class="figure__image" aria-hidden="true">
+          <div
+            id="map"
+            class="figure__map"
+            aria-hidden="true"
+            tabindex="-1"
+          ></div>
+        </div>
         <p class="figure__caption"></p>
         <div class="scrolly__content">
           <section
@@ -122,30 +129,32 @@
             <article class="scrolly__article">
               <div
                 class="step step--map"
-                data-bg="img/scene3.png"
-                data-caption="A future Mapbox embed will trace camps, rivers, and checkpoints."
+                data-caption="Zoomed out, the Darién Gap is a 60-mile break between Colombia and Panama."
+                data-map-center="-77.8,8.0"
+                data-map-zoom="6.2"
+                aria-hidden="true"
               >
-                <div class="step__text">
-                  <h2>Mapping the only break in the Pan-American Highway</h2>
-                  <p>
-                    Zoom and pan across the Darién Gap to see where the Pan-American Highway
-                    abruptly ends, forcing migrants to navigate jungle trails, rivers, and informal
-                    camps before reaching Panama.
-                  </p>
-                </div>
-                <div
-                  class="map-shell"
-                  role="group"
-                  aria-label="Interactive map outlining the Darién Gap between Colombia and Panama."
-                >
-                  <div
-                    id="map"
-                    style="min-height: clamp(360px, 70vh, 900px); width: 100%;"
-                    tabindex="0"
-                    aria-label="Map view of the Darién Gap"
-                  ></div>
 
-                </div>
+              </div>
+              <div
+                class="step step--map"
+                data-caption="Closer in, jungle trails and rivers funnel people toward informal camps."
+                data-map-center="-77.35,7.9"
+                data-map-zoom="7.6"
+                data-map-bearing="18"
+                data-map-pitch="35"
+                aria-hidden="true"
+              >
+              </div>
+              <div
+                class="step step--map"
+                data-caption="The final miles emerge near Bajo Chiquito, where Panama triages exhausted travelers."
+                data-map-center="-77.15,8.65"
+                data-map-zoom="9.3"
+                data-map-bearing="-12"
+                data-map-pitch="45"
+                aria-hidden="true"
+              >
               </div>
             </article>
           </section>
