@@ -16,6 +16,14 @@
     />
     <link rel="stylesheet" href="css/reset.css" />
     <link rel="stylesheet" href="css/style.css" />
+    <link
+      rel="stylesheet"
+      href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css"
+    />
+    <script
+      defer
+      src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"
+    ></script>
   </head>
   <body>
     <main>
@@ -110,31 +118,39 @@
             </article>
           </section>
 
-          <section class="scrolly" aria-label="Narrative scenes">
+          <section class="scrolly" aria-label="Map narrative">
             <article class="scrolly__article">
               <div
-                class="step"
-                aria-label="Map narrative"
+                class="step step--map"
                 data-bg="img/scene3.png"
                 data-caption="A future Mapbox embed will trace camps, rivers, and checkpoints."
               >
-              <h2>Mapping the only break in the Pan-American Highway</h2>
-              <p>
-                A future Mapbox embed will visualize the forested ridges, border rivers, and
-                humanitarian camps that define the route between Necoclí and Canaán Membrillo.
-                Track how caravans push north and where aid stations try to keep up.
-              </p>
-              <p class="todo">
-                TODO: Replace this placeholder with an actual Mapbox embed that pans through the
-                Darién as the reader scrolls.
-              </p>
-            </div>
-            <div class="embed-placeholder" aria-label="Mapbox placeholder">
-              &lt;Mapbox embed&gt;
-            </div>
+                <div class="step__text">
+                  <h2>Mapping the only break in the Pan-American Highway</h2>
+                  <p>
+                    Zoom and pan across the Darién Gap to see where the Pan-American Highway
+                    abruptly ends, forcing migrants to navigate jungle trails, rivers, and informal
+                    camps before reaching Panama.
+                  </p>
+                </div>
+                <div
+                  class="map-shell"
+                  role="group"
+                  aria-label="Interactive map outlining the Darién Gap between Colombia and Panama."
+                >
+                  <div
+                    id="map"
+                    style="min-height: clamp(360px, 70vh, 900px); width: 100%;"
+                    tabindex="0"
+                    aria-label="Map view of the Darién Gap"
+                  ></div>
+
+                </div>
+              </div>
+            </article>
           </section>
 
-<section class="scrolly" aria-label="Map narrative">
+<section class="scrolly" aria-label="Exponential rise narrative">
             <article class="scrolly__article">
               <div
                 class="step"

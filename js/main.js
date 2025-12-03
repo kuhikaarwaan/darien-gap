@@ -61,3 +61,97 @@ if (screenBlocks.length) {
 
   screenBlocks.forEach(block => blockObserver.observe(block));
 }
+
+const mapContainer = document.getElementById("map");
+
+if (mapContainer && window.mapboxgl) {
+  // Set your Mapbox access token
+  mapboxgl.accessToken = "pk.eyJ1Ijoia3VoaWthIiwiYSI6ImNtaGR2anRheDA3YTAycXBpZnNwZ2I1bTMifQ.zifNwpp3S5WlAUvhxJgyZw";
+
+  const map = new mapboxgl.Map({
+    container: "map",
+    style: "mapbox://styles/mapbox/streets-v12",
+    center: [-77.8, 8.0], // temporary center before fitBounds
+    zoom: 6
+  });
+
+  map.addControl(new mapboxgl.NavigationControl(), "top-right");
+
+  map.on("load", () => {
+    // Load GeoJSON from external file
+    fetch("data/geojson/darien-gap.geojson")
+      .then(res => res.json())
+      .then(geojson => {
+        // Add as a source
+        map.addSource("territory", {
+          type: "geojson",
+          data: geojson
+        });
+
+        // Fill layer
+        map.addLayer({
+          id: "territory-fill",
+          type: "fill",
+          source: "territory",
+          paint: {
+            "fill-color": "#ff6600",
+            "fill-opacity": 0.35
+          }
+        });
+
+        // Outline layer
+        map.addLayer({
+          id: "territory-outline",
+          type: "line",
+          source: "territory",
+          paint: {
+            "line-color": "#ff6600",
+            "line-width": 2
+          }
+        });
+
+        // Compute bounds and fit
+        const bounds = new mapboxgl.LngLatBounds();
+        const features = geojson.features || [];
+
+        features.forEach(f => {
+          const geom = f.geometry;
+          if (!geom) return;
+
+          if (geom.type === "Polygon") {
+            geom.coordinates[0].forEach(c => bounds.extend(c));
+          } else if (geom.type === "MultiPolygon") {
+            geom.coordinates.forEach(poly => {
+              poly[0].forEach(c => bounds.extend(c));
+            });
+          }
+        });
+
+        if (!bounds.isEmpty()) {
+          map.fitBounds(bounds, { padding: 40 });
+        }
+      })
+      .catch(err => {
+        console.error("Error loading GeoJSON:", err);
+      });
+  });
+
+  // Optional interactions
+  map.on("click", "territory-fill", (e) => {
+    new mapboxgl.Popup()
+      .setLngLat(e.lngLat)
+      .setHTML("<strong>Territory</strong>")
+      .addTo(map);
+  });
+
+  map.on("mouseenter", "territory-fill", () => {
+    map.getCanvas().style.cursor = "pointer";
+  });
+
+  map.on("mouseleave", "territory-fill", () => {
+    map.getCanvas().style.cursor = "";
+  });
+} else if (mapContainer) {
+  mapContainer.textContent = "Map failed to load. Please retry once the page finishes loading.";
+}
+
