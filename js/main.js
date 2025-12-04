@@ -271,8 +271,8 @@ if (mapContainer && window.mapboxgl) {
           type: "fill",
           source: "territory",
           paint: {
-            "fill-color": "#ff6600",
-            "fill-opacity": 0.35
+            "fill-color": "#228B22",
+            "fill-opacity": 0.25
           }
         });
 
@@ -281,7 +281,7 @@ if (mapContainer && window.mapboxgl) {
           type: "line",
           source: "territory",
           paint: {
-            "line-color": "#ff6600",
+            "line-color": "#006400",
             "line-width": 2
           }
         });

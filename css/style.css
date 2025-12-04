@@ -247,13 +247,13 @@ main {
 
 .figure__map.is-active {
   opacity: 1;
-  pointer-events: auto;
+  pointer-events: none;
 }
 
 .figure__image--map {
   background-image: none !important;
   background-color: #03070b;
-  pointer-events: auto;
+  pointer-events: none;
 }
 
 .figure__image--map::before {
