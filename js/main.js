@@ -3,10 +3,103 @@ const figureCaption = document.querySelector('.figure__caption');
 const figureMap = document.querySelector('.figure__map');
 const steps = document.querySelectorAll('.scrolly .step');
 const screenBlocks = document.querySelectorAll('.screen-block');
+const articleBackgroundBlocks = document.querySelectorAll('article[data-bg]');
+
+const SLIDE_DURATION = 900;
+let backgroundSlideTimeout = null;
+let slideRequestToken = 0;
 
 let mapInstance = null;
 let mapLoaded = false;
 let pendingMapView = null;
+
+const setFigureBackground = imagePath => {
+  if (!figureImage) return;
+  if (imagePath) {
+    figureImage.style.backgroundImage = `url(${imagePath})`;
+    figureImage.dataset.currentBg = imagePath;
+  } else {
+    figureImage.style.backgroundImage = '';
+    delete figureImage.dataset.currentBg;
+  }
+};
+
+const finishSlideTransition = () => {
+  if (!figureImage) return;
+  if (backgroundSlideTimeout) {
+    clearTimeout(backgroundSlideTimeout);
+    backgroundSlideTimeout = null;
+  }
+  if (figureImage.dataset.pendingBg) {
+    setFigureBackground(figureImage.dataset.pendingBg);
+    delete figureImage.dataset.pendingBg;
+  }
+  figureImage.classList.remove('is-sliding');
+  figureImage.style.removeProperty('--next-background');
+};
+
+const clearFigureBackground = () => {
+  slideRequestToken += 1;
+  finishSlideTransition();
+  setFigureBackground('');
+};
+
+const preloadImage = (src, callback) => {
+  const img = new Image();
+  const done = () => callback();
+  img.onload = done;
+  img.onerror = done;
+  img.src = src;
+};
+
+const beginSlideAnimation = (imagePath, token) => {
+  if (!figureImage || token !== slideRequestToken) return;
+  finishSlideTransition();
+
+  figureImage.dataset.pendingBg = imagePath;
+  figureImage.style.setProperty('--next-background', `url(${imagePath})`);
+
+  void figureImage.offsetWidth;
+  requestAnimationFrame(() => {
+    if (!figureImage || token !== slideRequestToken) return;
+    figureImage.classList.add('is-sliding');
+  });
+
+  backgroundSlideTimeout = window.setTimeout(() => {
+    if (!figureImage || figureImage.dataset.pendingBg !== imagePath) {
+      return;
+    }
+    setFigureBackground(imagePath);
+    delete figureImage.dataset.pendingBg;
+    figureImage.classList.remove('is-sliding');
+    figureImage.style.removeProperty('--next-background');
+    backgroundSlideTimeout = null;
+  }, SLIDE_DURATION);
+};
+
+const transitionBackgroundImage = imagePath => {
+  if (!figureImage || !imagePath) return;
+  const currentBg = figureImage.dataset.currentBg;
+
+  if (!currentBg) {
+    setFigureBackground(imagePath);
+    return;
+  }
+
+  if (currentBg === imagePath) {
+    return;
+  }
+
+  slideRequestToken += 1;
+  const token = slideRequestToken;
+  preloadImage(imagePath, () => beginSlideAnimation(imagePath, token));
+};
+
+articleBackgroundBlocks.forEach(block => {
+  const bg = block.dataset.bg;
+  if (!bg) return;
+  block.style.setProperty('--article-bg-image', `url(${bg})`);
+});
 
 const toggleMapBackground = isActive => {
   if (figureMap) {
@@ -89,13 +182,13 @@ const updateFigure = step => {
   if (isMapStep) {
     toggleMapBackground(true);
     if (figureImage) {
-      figureImage.style.backgroundImage = '';
+      clearFigureBackground();
     }
     flyToMapView(getMapViewFromStep(step));
   } else {
     toggleMapBackground(false);
     if (bg && figureImage) {
-      figureImage.style.backgroundImage = `url(${bg})`;
+      transitionBackgroundImage(bg);
     }
   }
 
